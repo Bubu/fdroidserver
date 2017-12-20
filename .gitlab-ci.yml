@@ -31,8 +31,6 @@ metadata_v0:
 
 debian_testing:
   image: debian:testing
-  only:
-    - master@fdroid/fdroidserver
   script:
     - apt update -y
     - apt dist-upgrade -y
@@ -47,8 +45,6 @@ debian_testing:
 
 ubuntu_lts:
   image: ubuntu:latest
-  only:
-    - master@fdroid/fdroidserver
   script:
     - apt-key adv --keyserver hkp://pool.sks-keyservers.net --recv-key 9AAC253193B65D4DF1D0A13EEC4632C79C5E0151
     - export RELEASE=`sed -n 's,^deb [^ ][^ ]* \([a-z]*\).*,\1,p' /etc/apt/sources.list | head -1`
@@ -70,8 +66,6 @@ ubuntu_lts:
 
 pip_install:
   image: archlinux/base
-  only:
-    - master@fdroid/fdroidserver
   script:
     - pacman --sync --sysupgrade --refresh --noconfirm grep python-pip python-virtualenv tar
     # setup venv to act as release build machine
@@ -89,8 +83,6 @@ pip_install:
 
 fedora_latest:
   image: fedora:latest
-  only:
-    - master@fdroid/fdroidserver
   script:
     - dnf -y update
     - dnf -y install git gnupg java-1.8.0-openjdk-devel python3 python3-babel
