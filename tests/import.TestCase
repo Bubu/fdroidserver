@@ -2,36 +2,17 @@
 
 # http://www.drdobbs.com/testing/unit-testing-with-python/240165163
 
-import inspect
-import logging
-import optparse
-import os
 import requests
-import sys
-import unittest
 
-localmodule = os.path.realpath(
-    os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), '..'))
-print('localmodule: ' + localmodule)
-if localmodule not in sys.path:
-    sys.path.insert(0, localmodule)
-
+import testbase
 import fdroidserver.common
 import fdroidserver.metadata
 # work around the syntax error from: import fdroidserver.import
 import import_proxy
 
 
-class ImportTest(unittest.TestCase):
+class ImportTest(testbase.TestBase):
     '''fdroid import'''
-
-    def setUp(self):
-        logging.basicConfig(level=logging.DEBUG)
-        self.basedir = os.path.join(localmodule, 'tests')
-        self.tmpdir = os.path.abspath(os.path.join(self.basedir, '..', '.testfiles'))
-        if not os.path.exists(self.tmpdir):
-            os.makedirs(self.tmpdir)
-        os.chdir(self.basedir)
 
     def test_import_gitlab(self):
         # FDroidPopen needs some config to work
@@ -55,11 +36,4 @@ class ImportTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    parser = optparse.OptionParser()
-    parser.add_option("-v", "--verbose", action="store_true", default=False,
-                      help="Spew out even more information than normal")
-    (fdroidserver.common.options, args) = parser.parse_args(['--verbose'])
-
-    newSuite = unittest.TestSuite()
-    newSuite.addTest(unittest.makeSuite(ImportTest))
-    unittest.main(failfast=False)
+    ImportTest.main()

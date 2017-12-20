@@ -1,24 +1,15 @@
 #!/usr/bin/env python3
 
-import inspect
 import logging
-import optparse
 import os
-import sys
-import unittest
 
-localmodule = os.path.realpath(
-    os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), '..'))
-print('localmodule: ' + localmodule)
-if localmodule not in sys.path:
-    sys.path.insert(0, localmodule)
-
+import testbase
 import fdroidserver.common
 import fdroidserver.metadata
 import fdroidserver.update
 
 
-class UpdateTest(unittest.TestCase):
+class UpdateTest(testbase.TestBase):
     '''fdroid androguard manual tests'''
 
     def testScanMetadataAndroguardAAPT(self):
@@ -32,7 +23,7 @@ class UpdateTest(unittest.TestCase):
             apk['features'] = []
             apk['icons_src'] = {}
             return apk
-        
+
         config = dict()
         fdroidserver.common.fill_config_defaults(config)
         fdroidserver.update.config = config
@@ -79,11 +70,4 @@ class UpdateTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    parser = optparse.OptionParser()
-    parser.add_option("-v", "--verbose", action="store_true", default=False,
-                      help="Spew out even more information than normal")
-    (fdroidserver.common.options, args) = parser.parse_args(['--verbose'])
-
-    newSuite = unittest.TestSuite()
-    newSuite.addTest(unittest.makeSuite(UpdateTest))
-    unittest.main()
+    UpdateTest.main()

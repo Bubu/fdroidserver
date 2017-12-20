@@ -5,23 +5,16 @@
 import git
 import inspect
 import logging
-import optparse
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
-import unittest
 import yaml
 from binascii import unhexlify
 from distutils.version import LooseVersion
 
-localmodule = os.path.realpath(
-    os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), '..'))
-print('localmodule: ' + localmodule)
-if localmodule not in sys.path:
-    sys.path.insert(0, localmodule)
-
+import testbase
 import fdroidserver.common
 import fdroidserver.exception
 import fdroidserver.metadata
@@ -29,16 +22,8 @@ import fdroidserver.update
 from fdroidserver.common import FDroidPopen
 
 
-class UpdateTest(unittest.TestCase):
+class UpdateTest(testbase.TestBase):
     '''fdroid update'''
-
-    def setUp(self):
-        logging.basicConfig(level=logging.INFO)
-        self.basedir = os.path.join(localmodule, 'tests')
-        self.tmpdir = os.path.abspath(os.path.join(self.basedir, '..', '.testfiles'))
-        if not os.path.exists(self.tmpdir):
-            os.makedirs(self.tmpdir)
-        os.chdir(self.basedir)
 
     def testInsertStoreMetadata(self):
         config = dict()
@@ -46,7 +31,7 @@ class UpdateTest(unittest.TestCase):
         config['accepted_formats'] = ('txt', 'yml')
         fdroidserver.update.config = config
         fdroidserver.update.options = fdroidserver.common.options
-        os.chdir(os.path.join(localmodule, 'tests'))
+        os.chdir(os.path.join(self.localmodule, 'tests'))
 
         shutil.rmtree(os.path.join('repo', 'info.guardianproject.urzip'), ignore_errors=True)
 
@@ -233,7 +218,7 @@ class UpdateTest(unittest.TestCase):
                          "python sig should be: " + str(sig))
 
     def testScanApksAndObbs(self):
-        os.chdir(os.path.join(localmodule, 'tests'))
+        os.chdir(os.path.join(self.localmodule, 'tests'))
         if os.path.basename(os.getcwd()) != 'tests':
             raise Exception('This test must be run in the "tests/" subdir')
 
@@ -293,7 +278,7 @@ class UpdateTest(unittest.TestCase):
         config = dict()
         fdroidserver.common.fill_config_defaults(config)
         fdroidserver.update.config = config
-        os.chdir(os.path.join(localmodule, 'tests'))
+        os.chdir(os.path.join(self.localmodule, 'tests'))
         if os.path.basename(os.getcwd()) != 'tests':
             raise Exception('This test must be run in the "tests/" subdir')
 
@@ -323,7 +308,7 @@ class UpdateTest(unittest.TestCase):
         config = dict()
         fdroidserver.common.fill_config_defaults(config)
         fdroidserver.update.config = config
-        os.chdir(os.path.join(localmodule, 'tests'))
+        os.chdir(os.path.join(self.localmodule, 'tests'))
         if os.path.basename(os.getcwd()) != 'tests':
             raise Exception('This test must be run in the "tests/" subdir')
 
@@ -339,7 +324,7 @@ class UpdateTest(unittest.TestCase):
         config = dict()
         fdroidserver.common.fill_config_defaults(config)
         fdroidserver.update.config = config
-        os.chdir(os.path.join(localmodule, 'tests'))
+        os.chdir(os.path.join(self.localmodule, 'tests'))
         if os.path.basename(os.getcwd()) != 'tests':
             raise Exception('This test must be run in the "tests/" subdir')
 
@@ -486,7 +471,7 @@ class UpdateTest(unittest.TestCase):
             self.assertFalse(cachechanged)
 
     def test_process_invalid_apk(self):
-        os.chdir(os.path.join(localmodule, 'tests'))
+        os.chdir(os.path.join(self.localmodule, 'tests'))
         if os.path.basename(os.getcwd()) != 'tests':
             raise Exception('This test must be run in the "tests/" subdir')
 
@@ -506,7 +491,7 @@ class UpdateTest(unittest.TestCase):
         self.assertFalse(cachechanged)
 
     def test_translate_per_build_anti_features(self):
-        os.chdir(os.path.join(localmodule, 'tests'))
+        os.chdir(os.path.join(self.localmodule, 'tests'))
         if os.path.basename(os.getcwd()) != 'tests':
             raise Exception('This test must be run in the "tests/" subdir')
 
@@ -544,7 +529,7 @@ class UpdateTest(unittest.TestCase):
         os.chdir(tmptestsdir)
         os.mkdir('repo')
         os.mkdir('metadata')
-        shutil.copy(os.path.join(localmodule, 'tests', 'urzip.apk'), 'repo')
+        shutil.copy(os.path.join(self.localmodule, 'tests', 'urzip.apk'), 'repo')
 
         config = dict()
         fdroidserver.common.fill_config_defaults(config)
@@ -586,7 +571,7 @@ class UpdateTest(unittest.TestCase):
         # test using external template.yml
         os.remove(testfile)
         self.assertFalse(os.path.exists(testfile))
-        shutil.copy(os.path.join(localmodule, 'examples', 'template.yml'), tmptestsdir)
+        shutil.copy(os.path.join(self.localmodule, 'examples', 'template.yml'), tmptestsdir)
         fdroidserver.update.create_metadata_from_template(apk)
         self.assertTrue(os.path.exists(testfile))
         apps = fdroidserver.metadata.read_metadata(xref=True)
@@ -632,11 +617,4 @@ class UpdateTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    parser = optparse.OptionParser()
-    parser.add_option("-v", "--verbose", action="store_true", default=False,
-                      help="Spew out even more information than normal")
-    (fdroidserver.common.options, args) = parser.parse_args(['--verbose'])
-
-    newSuite = unittest.TestSuite()
-    newSuite.addTest(unittest.makeSuite(UpdateTest))
-    unittest.main(failfast=False)
+    UpdateTest.main()
