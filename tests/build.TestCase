@@ -3,17 +3,26 @@
 # http://www.drdobbs.com/testing/unit-testing-with-python/240165163
 
 import inspect
+import logging
+import optparse
 import os
 import re
 import shutil
+import sys
 import tempfile
+import unittest
 
-import testbase
+localmodule = os.path.realpath(
+    os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), '..'))
+print('localmodule: ' + localmodule)
+if localmodule not in sys.path:
+    sys.path.insert(0, localmodule)
+
 import fdroidserver.build
 import fdroidserver.common
 
 
-class BuildTest(testbase.TestBase):
+class BuildTest(unittest.TestCase):
     '''fdroidserver/build.py'''
 
     def _set_build_tools(self):
@@ -38,6 +47,14 @@ class BuildTest(testbase.TestBase):
                 self.assertTrue(os.path.exists(path))
                 self.assertTrue(os.path.isfile(path))
 
+    def setUp(self):
+        logging.basicConfig(level=logging.DEBUG)
+        self.basedir = os.path.join(localmodule, 'tests')
+        self.tmpdir = os.path.abspath(os.path.join(self.basedir, '..', '.testfiles'))
+        if not os.path.exists(self.tmpdir):
+            os.makedirs(self.tmpdir)
+        os.chdir(self.basedir)
+
     def test_force_gradle_build_tools(self):
         testdir = tempfile.mkdtemp(prefix=inspect.currentframe().f_code.co_name, dir=self.tmpdir)
         shutil.copytree(os.path.join(os.path.dirname(__file__), 'source-files'),
@@ -56,4 +73,11 @@ class BuildTest(testbase.TestBase):
 
 
 if __name__ == "__main__":
-    BuildTest.main()
+    parser = optparse.OptionParser()
+    parser.add_option("-v", "--verbose", action="store_true", default=False,
+                      help="Spew out even more information than normal")
+    (fdroidserver.common.options, args) = parser.parse_args(['--verbose'])
+
+    newSuite = unittest.TestSuite()
+    newSuite.addTest(unittest.makeSuite(BuildTest))
+    unittest.main(failfast=False)

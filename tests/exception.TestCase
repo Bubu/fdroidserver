@@ -2,13 +2,23 @@
 
 # http://www.drdobbs.com/testing/unit-testing-with-python/240165163
 
+import inspect
 import optparse
-import testbase
+import os
+import sys
+import unittest
+
+localmodule = os.path.realpath(
+    os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), '..'))
+print('localmodule: ' + localmodule)
+if localmodule not in sys.path:
+    sys.path.insert(0, localmodule)
+
 import fdroidserver.common
 import fdroidserver.exception
 
 
-class ExceptionTest(testbase.TestBase):
+class ExceptionTest(unittest.TestCase):
     '''fdroidserver/exception.py'''
 
     def test_FDroidException(self):
@@ -44,4 +54,12 @@ class ExceptionTest(testbase.TestBase):
 
 
 if __name__ == "__main__":
-    ExceptionTest.main()
+    parser = optparse.OptionParser()
+    parser.add_option("-v", "--verbose", action="store_true", default=False,
+                      help="Spew out even more information than normal")
+    (fdroidserver.exception.options, args) = parser.parse_args(['--verbose'])
+    fdroidserver.common.options = fdroidserver.exception.options
+
+    newSuite = unittest.TestSuite()
+    newSuite.addTest(unittest.makeSuite(ExceptionTest))
+    unittest.main(failfast=False)

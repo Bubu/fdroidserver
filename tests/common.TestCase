@@ -3,15 +3,25 @@
 # http://www.drdobbs.com/testing/unit-testing-with-python/240165163
 
 import inspect
+import logging
+import optparse
 import os
 import re
 import shutil
+import sys
 import tempfile
+import unittest
 import textwrap
 import yaml
 from zipfile import ZipFile
 
-import testbase
+
+localmodule = os.path.realpath(
+    os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), '..'))
+print('localmodule: ' + localmodule)
+if localmodule not in sys.path:
+    sys.path.insert(0, localmodule)
+
 import fdroidserver.index
 import fdroidserver.signindex
 import fdroidserver.common
@@ -20,8 +30,16 @@ from testcommon import TmpCwd
 from fdroidserver.exception import FDroidException
 
 
-class CommonTest(testbase.TestBase):
+class CommonTest(unittest.TestCase):
     '''fdroidserver/common.py'''
+
+    def setUp(self):
+        logging.basicConfig(level=logging.DEBUG)
+        self.basedir = os.path.join(localmodule, 'tests')
+        self.tmpdir = os.path.abspath(os.path.join(self.basedir, '..', '.testfiles'))
+        if not os.path.exists(self.tmpdir):
+            os.makedirs(self.tmpdir)
+        os.chdir(self.basedir)
 
     def test_assert_config_keystore(self):
         with tempfile.TemporaryDirectory() as tmpdir, TmpCwd(tmpdir):
@@ -639,4 +657,11 @@ class CommonTest(testbase.TestBase):
 
 
 if __name__ == "__main__":
-    CommonTest.main()
+    parser = optparse.OptionParser()
+    parser.add_option("-v", "--verbose", action="store_true", default=False,
+                      help="Spew out even more information than normal")
+    (fdroidserver.common.options, args) = parser.parse_args(['--verbose'])
+
+    newSuite = unittest.TestSuite()
+    newSuite.addTest(unittest.makeSuite(CommonTest))
+    unittest.main(failfast=False)

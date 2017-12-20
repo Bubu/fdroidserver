@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
+import inspect
+import logging
 import optparse
 import os
+import sys
 import unittest
 import zipfile
 from unittest.mock import patch
@@ -10,7 +13,12 @@ import tempfile
 import json
 import shutil
 
-import testbase
+localmodule = os.path.realpath(
+    os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), '..'))
+print('localmodule: ' + localmodule)
+if localmodule not in sys.path:
+    sys.path.insert(0, localmodule)
+
 import fdroidserver.common
 import fdroidserver.index
 import fdroidserver.signindex
@@ -21,10 +29,16 @@ from testcommon import TmpCwd
 GP_FINGERPRINT = 'B7C2EEFD8DAC7806AF67DFCD92EB18126BC08312A7F2D6F3862E46013C7A6135'
 
 
-class IndexTest(testbase.TestBase):
+class IndexTest(unittest.TestCase):
 
     def setUp(self):
-        super().setUp()
+        logging.basicConfig(level=logging.DEBUG)
+        self.basedir = os.path.join(localmodule, 'tests')
+        self.tmpdir = os.path.abspath(os.path.join(self.basedir, '..', '.testfiles'))
+        if not os.path.exists(self.tmpdir):
+            os.makedirs(self.tmpdir)
+        os.chdir(self.basedir)
+
         fdroidserver.common.config = None
         config = fdroidserver.common.read_config(fdroidserver.common.options)
         config['jarsigner'] = fdroidserver.common.find_sdk_tools_cmd('jarsigner')

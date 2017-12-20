@@ -10,7 +10,6 @@ print('localmodule: ' + localmodule)
 if localmodule not in sys.path:
     sys.path.insert(0, localmodule)
 
-
 class Options:
     def __init__(self):
         self.rev = None

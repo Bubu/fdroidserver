@@ -11,18 +11,35 @@
 #
 
 import inspect
+import logging
+import optparse
 import os
+import sys
+import unittest
 import tempfile
 import textwrap
 
-import testbase
+localmodule = os.path.realpath(
+    os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), '..'))
+print('localmodule: ' + localmodule)
+if localmodule not in sys.path:
+    sys.path.insert(0, localmodule)
+
 from fdroidserver import publish
 from fdroidserver import common
 from fdroidserver.exception import FDroidException
 
 
-class PublishTest(testbase.TestBase):
+class PublishTest(unittest.TestCase):
     '''fdroidserver/publish.py'''
+
+    def setUp(self):
+        logging.basicConfig(level=logging.DEBUG)
+        self.basedir = os.path.join(localmodule, 'tests')
+        self.tmpdir = os.path.abspath(os.path.join(self.basedir, '..', '.testfiles'))
+        if not os.path.exists(self.tmpdir):
+            os.makedirs(self.tmpdir)
+        os.chdir(self.basedir)
 
     def test_key_alias(self):
         publish.config = {}
@@ -118,4 +135,11 @@ class PublishTest(testbase.TestBase):
 
 
 if __name__ == "__main__":
-    PublishTest.main()
+    parser = optparse.OptionParser()
+    parser.add_option("-v", "--verbose", action="store_true", default=False,
+                      help="Spew out even more information than normal")
+    (common.options, args) = parser.parse_args(['--verbose'])
+
+    newSuite = unittest.TestSuite()
+    newSuite.addTest(unittest.makeSuite(PublishTest))
+    unittest.main(failfast=False)

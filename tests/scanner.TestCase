@@ -1,14 +1,30 @@
 #!/usr/bin/env python3
 
 import glob
+import inspect
+import logging
+import optparse
 import os
+import sys
+import unittest
 
-import testbase
+localmodule = os.path.realpath(
+    os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), '..'))
+print('localmodule: ' + localmodule)
+if localmodule not in sys.path:
+    sys.path.insert(0, localmodule)
+
+import fdroidserver.common
 import fdroidserver.metadata
 import fdroidserver.scanner
 
 
-class ScannerTest(testbase.TestBase):
+class ScannerTest(unittest.TestCase):
+
+    def setUp(self):
+        logging.basicConfig(level=logging.INFO)
+        self.basedir = os.path.join(localmodule, 'tests')
+
     def test_scan_source_files(self):
         source_files = os.path.join(self.basedir, 'source-files')
         projects = {
@@ -23,4 +39,11 @@ class ScannerTest(testbase.TestBase):
 
 
 if __name__ == "__main__":
-    ScannerTest.main()
+    parser = optparse.OptionParser()
+    parser.add_option("-v", "--verbose", action="store_true", default=False,
+                      help="Spew out even more information than normal")
+    (fdroidserver.common.options, args) = parser.parse_args(['--verbose'])
+
+    newSuite = unittest.TestSuite()
+    newSuite.addTest(unittest.makeSuite(ScannerTest))
+    unittest.main(failfast=False)
